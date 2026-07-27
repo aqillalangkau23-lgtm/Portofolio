@@ -1,4 +1,3 @@
-/* src/index.css */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
 
 * {
@@ -6,16 +5,15 @@
   padding: 0;
   box-sizing: border-box;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  scroll-behavior: smooth; /* Biar kalau klik menu, scroll-nya mulus */
+  scroll-behavior: smooth;
 }
 
 body {
-  background-color: #0d0e15; /* Warna background gelap yang clean */
-  color: #e2e8f0;            /* Warna teks abu-abu terang */
+  background-color: #0d0e15;
+  color: #e2e8f0;
   line-height: 1.6;
 }
 
-/* Class bantuan biar rapi */
 .container {
   max-width: 1000px;
   margin: 0 auto;
@@ -41,7 +39,7 @@ body {
 
 .btn {
   display: inline-block;
-  background-color: #3b82f6; /* Warna biru profesional */
+  background-color: #3b82f6;
   color: white;
   padding: 10px 20px;
   border-radius: 8px;
