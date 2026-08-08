@@ -1,4 +1,22 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  FaGraduationCap, 
+  FaIndustry, 
+  FaPalette, 
+  FaBullhorn, 
+  FaLaptopCode, 
+  FaUsers, 
+  FaMapMarkerAlt, 
+  FaBolt, 
+  FaCheckCircle, 
+  FaTimes, 
+  FaChevronLeft, 
+  FaChevronRight, 
+  FaArrowRight, 
+  FaPlay, 
+  FaFilm, 
+  FaImage 
+} from 'react-icons/fa';
 
 // ============================================================
 // HOOK: Typewriter Effect
@@ -200,11 +218,14 @@ function ProjectModal({ categoryData, onClose }) {
                   color: '#fff',
                   fontSize: '0.7rem',
                   fontWeight: '700',
-                  padding: '3px 10px',
+                  padding: '4px 10px',
                   borderRadius: '8px',
                   letterSpacing: '0.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}>
-                  {currentMedia.type === 'youtube' ? '▶ YouTube' : '🎬 VIDEO'}
+                  {currentMedia.type === 'youtube' ? <><FaPlay size={10} /> YouTube</> : <><FaFilm size={10} /> VIDEO</>}
                 </div>
               )}
             </div>
@@ -220,7 +241,9 @@ function ProjectModal({ categoryData, onClose }) {
             <button
               onClick={() => goMedia(-1)}
               style={{ background: 'rgba(255,255,255,0.08)', border: `1px solid ${accentColor}40`, color: '#fff', width: '36px', height: '36px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >‹</button>
+            >
+              <FaChevronLeft size={12} />
+            </button>
 
             {currentProject.media.map((m, i) => (
               <button
@@ -242,7 +265,9 @@ function ProjectModal({ categoryData, onClose }) {
             <button
               onClick={() => goMedia(1)}
               style={{ background: 'rgba(255,255,255,0.08)', border: `1px solid ${accentColor}40`, color: '#fff', width: '36px', height: '36px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >›</button>
+            >
+              <FaChevronRight size={12} />
+            </button>
           </div>
 
           {/* Project Tabs (switcher) */}
@@ -305,12 +330,13 @@ function ProjectModal({ categoryData, onClose }) {
               height: '30px',
               borderRadius: '50%',
               cursor: 'pointer',
-              fontSize: '0.9rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
-          >✕</button>
+          >
+            <FaTimes size={14} />
+          </button>
 
           {/* Category label */}
           <div>
@@ -391,9 +417,9 @@ function ProjectModal({ categoryData, onClose }) {
             alignItems: 'center',
           }}>
             <span>Media {mediaIdx + 1} / {currentProject.media.length}</span>
-            <span style={{ color: accentColor, fontWeight: '600' }}>
-              {currentProject.media[mediaIdx].type === 'youtube' ? '▶ YouTube Embed' :
-               currentProject.media[mediaIdx].type === 'video' ? '🎬 Video Preview' : '🖼 Gambar'}
+            <span style={{ color: accentColor, fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {currentProject.media[mediaIdx].type === 'youtube' ? <><FaPlay size={10} /> YouTube Embed</> :
+               currentProject.media[mediaIdx].type === 'video' ? <><FaFilm size={10} /> Video Preview</> : <><FaImage size={10} /> Gambar</>}
             </span>
           </div>
         </div>
@@ -411,11 +437,11 @@ export default function AboutSection() {
   // DATABASE KARYA LENGKAP PER KATEGORI
   const modalData = {
     bem: {
-      categoryTitle: '📣 Kegiatan & Media BEM',
+      categoryTitle: 'Kegiatan & Media BEM',
       color: '#a855f7',
       projects: [
         {
-          title: '🎨 Desain Poster & Feed Instagram Event',
+          title: 'Desain Poster & Feed Instagram Event',
           tools: 'Canva Pro • Photoshop',
           desc: 'Perancangan materi publikasi visual mingguan & poster acara besar BEM untuk meningkatkan engagement followers. Setiap aset visual dirancang dengan identitas visual yang konsisten, tipografi yang bersih, dan estetika yang sesuai target audiens mahasiswa.',
           media: [
@@ -425,7 +451,7 @@ export default function AboutSection() {
           ]
         },
         {
-          title: '🎬 Video Reels Aftermath & Teaser Event',
+          title: 'Video Reels Aftermath & Teaser Event',
           tools: 'Premiere Pro • CapCut Pro',
           desc: 'Editing video dokumentasi acara, gabungan transisi dinamik, color grading, serta sound design cinematic. Hasil akhir diterbitkan sebagai Instagram Reels dan story highlight yang mencapai ribuan tayangan organik.',
           media: [
@@ -435,7 +461,7 @@ export default function AboutSection() {
           ]
         },
         {
-          title: '📸 Dokumentasi & Kepemimpinan Divisi Media',
+          title: 'Dokumentasi & Kepemimpinan Divisi Media',
           tools: 'Team Leadership • Media Management',
           desc: 'Dokumentasi aksi lapangan, koordinasi liputan divisi, dan pengelolaan aset digital media BEM. Bertanggung jawab atas seluruh output konten mingguan divisi media & komunikasi.',
           media: [
@@ -447,11 +473,11 @@ export default function AboutSection() {
       ]
     },
     mandiri: {
-      categoryTitle: '💻 Project Mandiri (Solo Exploration)',
+      categoryTitle: 'Project Mandiri (Solo Exploration)',
       color: '#3b82f6',
       projects: [
         {
-          title: '🌐 Interactive Portfolio Web (React 3D)',
+          title: 'Interactive Portfolio Web (React 3D)',
           tools: 'React JS • CSS 3D • Figma',
           desc: 'Pengembangan portofolio web interaktif dengan fitur Lanyard 3D Drag & Drop, Modal Carousel, dan Bento Grid. Dibangun menggunakan React + Vite, dengan animasi halus berbasis Web Audio API dan efek glassmorphism premium.',
           media: [
@@ -461,7 +487,7 @@ export default function AboutSection() {
           ]
         },
         {
-          title: '🎨 UI/UX E-Commerce Redesign Concept',
+          title: 'UI/UX E-Commerce Redesign Concept',
           tools: 'Figma • UI/UX Design',
           desc: 'Rancangan desain antarmuka aplikasi belanja online dengan pendekatan kenyamanan navigasi pengguna. Meliputi wireframing, user flow, hi-fi prototype, dan design system lengkap dengan komponen reusable.',
           media: [
@@ -473,11 +499,11 @@ export default function AboutSection() {
       ]
     },
     team: {
-      categoryTitle: '👥 Project Team & Kolaborasi',
+      categoryTitle: 'Project Team & Kolaborasi',
       color: '#22c55e',
       projects: [
         {
-          title: '🚀 Digitalisasi Sistem Informasi Kampus',
+          title: 'Digitalisasi Sistem Informasi Kampus',
           tools: 'React JS • Figma • Team Collaboration',
           desc: 'Fokus Saya: Lead Frontend & UI/UX Designer. Bertanggung jawab memimpin desain antarmuka dan implementasi komponen React. Berkolaborasi dengan backend developer untuk integrasi API dan validasi data form.',
           media: [
@@ -581,43 +607,55 @@ export default function AboutSection() {
             Berbekal pengalaman di lingkungan manufaktur (PT Akebono Brake Astra & PT TOA Galva) serta peran aktif di divisi media BEM, saya terbiasa memproses ide kreatif menjadi produk digital yang estetis, terstruktur, dan efisien.
           </p>
 
-          {/* MINI CARDS HIGHLIGHTS */}
+          {/* MINI CARDS HIGHLIGHTS (IKON ORIGINAL SVG) */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '16px',
             marginBottom: '26px'
           }}>
-            <div className="glass-card" style={{ padding: '16px 20px' }}>
-              <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>🎓 Akademik</span>
-              <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>S1 Teknik Informatika</strong>
-              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Universitas Esa Unggul</span>
+            <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FaGraduationCap size={20} color="#60a5fa" />
+              </div>
+              <div>
+                <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>Akademik — S1 Informatika</strong>
+                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Universitas Esa Unggul</span>
+              </div>
             </div>
 
-            <div className="glass-card" style={{ padding: '16px 20px' }}>
-              <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>🏭 Pengalaman Industri</span>
-              <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>Ketelitian & Process Efficiency</strong>
-              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>PT Akebono & PT TOA Galva</span>
+            <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FaIndustry size={18} color="#c084fc" />
+              </div>
+              <div>
+                <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>Pengalaman Industri</strong>
+                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>PT Akebono & PT TOA Galva</span>
+              </div>
             </div>
 
-            <div className="glass-card" style={{ padding: '16px 20px' }}>
-              <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>🎨 Media & Organisasi</span>
-              <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>Desain Visual & Video Editing</strong>
-              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Divisi Media BEM</span>
+            <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FaPalette size={18} color="#f87171" />
+              </div>
+              <div>
+                <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>Media & Organisasi</strong>
+                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Divisi Media BEM</span>
+              </div>
             </div>
           </div>
 
           {/* BOTTOM TAGS & STATUS BADGE */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                📍 Jakarta, Indonesia
+              <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <FaMapMarkerAlt color="#f43f5e" size={12} /> Jakarta, Indonesia
               </span>
-              <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                ⚡ Fast Learner
+              <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <FaBolt color="#eab308" size={12} /> Fast Learner
               </span>
-              <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                🎯 Adaptif & Disiplin
+              <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <FaCheckCircle color="#3b82f6" size={12} /> Adaptif & Disiplin
               </span>
             </div>
 
@@ -656,9 +694,9 @@ export default function AboutSection() {
           gap: '20px'
         }}>
           {[
-            { id: 'bem', icon: '📣', title: 'Kegiatan & Media BEM', desc: 'Desain poster Canva, editan video event, dan foto dokumentasi.', color: '#a855f7' },
-            { id: 'mandiri', icon: '💻', title: 'Project Mandiri', desc: 'Eksperimen personal, web app, tools, dan penjelasan fokus teknis.', color: '#3b82f6' },
-            { id: 'team', icon: '👥', title: 'Project Team', desc: 'Kolaborasi tim, role & jobdesk spesifik, serta hasil akhir proyek.', color: '#22c55e' }
+            { id: 'bem', icon: <FaBullhorn size={20} color="#c084fc" />, title: 'Kegiatan & Media BEM', desc: 'Desain poster Canva, editan video event, dan foto dokumentasi.', color: '#a855f7' },
+            { id: 'mandiri', icon: <FaLaptopCode size={20} color="#60a5fa" />, title: 'Project Mandiri', desc: 'Eksperimen personal, web app, tools, dan penjelasan fokus teknis.', color: '#3b82f6' },
+            { id: 'team', icon: <FaUsers size={20} color="#4ade80" />, title: 'Project Team', desc: 'Kolaborasi tim, role & jobdesk spesifik, serta hasil akhir proyek.', color: '#22c55e' }
           ].map((item) => (
             <div
               key={item.id}
@@ -703,7 +741,6 @@ export default function AboutSection() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.6rem',
                 flexShrink: 0,
               }}>
                 {item.icon}
@@ -721,9 +758,13 @@ export default function AboutSection() {
               <span style={{
                 color: item.color,
                 fontWeight: 'bold',
-                fontSize: '1.3rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 transition: 'transform 0.2s',
-              }}>→</span>
+              }}>
+                <FaArrowRight size={16} />
+              </span>
             </div>
           ))}
         </div>

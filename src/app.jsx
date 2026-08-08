@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import AboutSection from './components/AboutSection';
 import Contact from './components/Contact';
 import InteractiveBackground from './components/InteractiveBackground';
-import CommandPalette from './components/CommandPalette';
 import './App.css';
 
 function App() {
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  // State Utama Warna Aksen Tema (Default: Violet Galaxy)
+  const [activeColor, setActiveColor] = useState('#8b5cf6');
+
+  // Handler untuk mengubah warna aksen di seluruh website secara global
+  const handleColorChange = (hexColor, glowColor) => {
+    setActiveColor(hexColor);
+    document.documentElement.style.setProperty('--accent-primary', hexColor);
+    document.documentElement.style.setProperty('--accent-secondary', hexColor);
+    document.documentElement.style.setProperty('--accent-glow', glowColor || `${hexColor}35`);
+  };
+
+  // Set default CSS Variables saat website pertama kali dibuka
+  useEffect(() => {
+    handleColorChange('#8b5cf6', 'rgba(139, 92, 246, 0.35)');
+  }, []);
 
   return (
     <div style={{ 
@@ -20,8 +33,8 @@ function App() {
       {/* 1. Latar Belakang Partikel & Spotlight Kursor Interaktif */}
       <InteractiveBackground />
 
-      {/* 2. Navigation Bar */}
-      <Navbar onOpenPalette={setIsPaletteOpen} />
+      {/* 2. Navigation Bar (Terhubung dengan Pemilih Warna) */}
+      <Navbar activeColor={activeColor} onChangeColor={handleColorChange} />
 
       {/* 3. Hero Section (3D Holographic Lanyard & Real Synth Audio Vibe) */}
       <main style={{ position: 'relative', zIndex: 1 }}>
@@ -35,9 +48,6 @@ function App() {
           <Contact />
         </div>
       </main>
-
-      {/* 6. Quick Command Palette (Ctrl + K) & Theme Color Selector */}
-      <CommandPalette isOpen={isPaletteOpen} onClose={setIsPaletteOpen} />
     </div>
   );
 }
