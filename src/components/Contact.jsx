@@ -1,4 +1,12 @@
 import React, { useState } from 'react';
+import { 
+  FaEnvelope, 
+  FaLinkedin, 
+  FaGithub, 
+  FaWhatsapp, 
+  FaInstagram, 
+  FaTiktok 
+} from 'react-icons/fa';
 
 export default function Contact() {
   const [copied, setCopied] = useState(false);
@@ -15,43 +23,43 @@ export default function Contact() {
       name: 'Email',
       handle: 'aqillalangkau23@gmail.com',
       url: `mailto:${emailAddress}`,
-      brandColor: 'var(--accent-primary, #3b82f6)',
-      icon: '✉️'
+      brandColor: '#ea4335',
+      icon: <FaEnvelope size={22} color="#ea4335" />
     },
     {
       name: 'LinkedIn',
       handle: 'Aqilla Sofia',
       url: 'https://www.linkedin.com/in/aqillasofia23/',
       brandColor: '#0a66c2',
-      icon: '💼'
+      icon: <FaLinkedin size={22} color="#0a66c2" />
     },
     {
       name: 'GitHub',
       handle: 'aqillalangkau23-lgtm',
       url: 'https://github.com/aqillalangkau23-lgtm',
-      brandColor: '#a855f7',
-      icon: '💻'
+      brandColor: '#ffffff',
+      icon: <FaGithub size={22} color="#ffffff" />
     },
     {
       name: 'WhatsApp',
       handle: 'Chat Direct WhatsApp',
       url: 'https://wa.me/6285813462446',
       brandColor: '#22c55e',
-      icon: '💬'
+      icon: <FaWhatsapp size={22} color="#22c55e" />
     },
     {
       name: 'Instagram',
       handle: '@aqillasofia.yl',
       url: 'https://www.instagram.com/aqillasofia.yl?igsh=ODJ3dXY4Z3R5Znpk&utm_source=qr',
       brandColor: '#e1306c',
-      icon: '📷'
+      icon: <FaInstagram size={22} color="#e1306c" />
     },
     {
       name: 'TikTok',
       handle: '@qillaasyl',
       url: 'https://www.tiktok.com/@qillaasyl',
       brandColor: '#00f2fe',
-      icon: '🎵'
+      icon: <FaTiktok size={20} color="#00f2fe" />
     }
   ];
 
@@ -109,7 +117,8 @@ export default function Contact() {
 
         {/* EMAIL COPY QUICK BUTTON */}
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', marginBottom: '36px', background: 'rgba(15, 16, 25, 0.8)', padding: '10px 20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-          <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: '600' }}>✉️ {emailAddress}</span>
+          <FaEnvelope size={16} color="#60a5fa" />
+          <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: '600' }}>{emailAddress}</span>
           <button
             onClick={handleCopyEmail}
             style={{
@@ -128,7 +137,7 @@ export default function Contact() {
           </button>
         </div>
 
-        {/* SOCIAL LINKS GRID (SEJAJAR HORISONTAL / LANDSCAPE ALL 6 IN 1 ROW) */}
+        {/* SOCIAL LINKS GRID (SEJAJAR HORISONTAL DENGAN IKON ORIGINAL) */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
@@ -151,7 +160,7 @@ export default function Contact() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '6px',
+                gap: '8px',
                 transition: 'all 0.3s ease',
                 wordBreak: 'break-word',
                 overflow: 'hidden'
@@ -167,7 +176,20 @@ export default function Contact() {
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              <span style={{ fontSize: '1.4rem' }}>{item.icon}</span>
+              {/* Wadah Ikon SVG */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.05)'
+              }}>
+                {item.icon}
+              </div>
+
               <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{item.name}</span>
               <span style={{ color: '#64748b', fontSize: '0.68rem', textAlign: 'center', wordBreak: 'break-all' }}>{item.handle}</span>
             </a>
