@@ -1,16 +1,414 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
+// ============================================================
+// HOOK: Typewriter Effect
+// ============================================================
+function useTypewriter(text, speed = 22, isActive = false) {
+  const [displayed, setDisplayed] = useState('');
+  const [isDone, setIsDone] = useState(false);
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (!isActive || !text) {
+      setDisplayed('');
+      setIsDone(false);
+      return;
+    }
+    setDisplayed('');
+    setIsDone(false);
+    let i = 0;
+    const type = () => {
+      if (i < text.length) {
+        setDisplayed(text.slice(0, i + 1));
+        i++;
+        timeoutRef.current = setTimeout(type, speed);
+      } else {
+        setIsDone(true);
+      }
+    };
+    // Small delay before starting
+    timeoutRef.current = setTimeout(type, 180);
+    return () => clearTimeout(timeoutRef.current);
+  }, [text, isActive, speed]);
+
+  return { displayed, isDone };
+}
+
+// ============================================================
+// COMPONENT: Media Renderer (Image / MP4 Video / YouTube)
+// ============================================================
+function MediaRenderer({ media }) {
+  if (!media) return null;
+
+  if (media.type === 'youtube') {
+    const embedId = media.url.includes('watch?v=')
+      ? media.url.split('watch?v=')[1].split('&')[0]
+      : media.url.split('/').pop();
+    return (
+      <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', borderRadius: '14px', overflow: 'hidden', backgroundColor: '#0a0b10' }}>
+        <iframe
+          src={`https://www.youtube.com/embed/${embedId}?autoplay=0&rel=0&modestbranding=1`}
+          title={media.caption}
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+        />
+      </div>
+    );
+  }
+
+  if (media.type === 'video') {
+    return (
+      <video
+        src={media.url}
+        controls
+        style={{ width: '100%', borderRadius: '14px', backgroundColor: '#0a0b10', maxHeight: '340px', objectFit: 'contain' }}
+      />
+    );
+  }
+
+  // Default: image
+  return (
+    <img
+      src={media.url}
+      alt={media.caption}
+      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+      onError={(e) => { e.target.src = `https://via.placeholder.com/600x350/181926/60a5fa?text=${encodeURIComponent(media.caption || 'Preview')}`; }}
+    />
+  );
+}
+
+// ============================================================
+// COMPONENT: 3D Tilt + Typewriter Modal (Full-screen overlay)
+// ============================================================
+function ProjectModal({ categoryData, onClose }) {
+  const [projectIdx, setProjectIdx] = useState(0);
+  const [mediaIdx, setMediaIdx] = useState(0);
+  const [panelVisible, setPanelVisible] = useState(false);
+
+  const currentProject = categoryData.projects[projectIdx];
+  const currentMedia = currentProject.media[mediaIdx];
+
+  // Trigger panel + typewriter after mount or project change
+  useEffect(() => {
+    setPanelVisible(false);
+    const t = setTimeout(() => setPanelVisible(true), 80);
+    return () => clearTimeout(t);
+  }, [projectIdx]);
+
+  const { displayed: typedDesc, isDone } = useTypewriter(currentProject.desc, 18, panelVisible);
+  const { displayed: typedTitle } = useTypewriter(currentProject.title, 30, panelVisible);
+
+  const goProject = (dir) => {
+    setProjectIdx((prev) => (prev + dir + categoryData.projects.length) % categoryData.projects.length);
+    setMediaIdx(0);
+  };
+
+  const goMedia = (dir) => {
+    setMediaIdx((prev) => (prev + dir + currentProject.media.length) % currentProject.media.length);
+  };
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  const accentColor = categoryData.color;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0,0,0,0.88)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        animation: 'fadeInScale 0.22s ease-out',
+      }}
+    >
+      {/* Modal Container — two-panel layout */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          display: 'flex',
+          width: '100%',
+          maxWidth: '1020px',
+          maxHeight: '88vh',
+          gap: '20px',
+          position: 'relative',
+        }}
+      >
+        {/* ---- LEFT PANEL: 3D Tilted Media Card ---- */}
+        <div
+          style={{
+            flex: '1 1 55%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}
+        >
+          {/* Media Card with 3D Tilt */}
+          <div
+            style={{
+              backgroundColor: '#13141f',
+              border: `1px solid ${accentColor}50`,
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: `0 30px 70px rgba(0,0,0,0.9), 0 0 50px ${accentColor}25`,
+              transform: `perspective(1100px) rotateY(-12deg) rotateX(3deg) scale(0.97)`,
+              transformOrigin: 'center center',
+              transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              position: 'relative',
+              height: '320px',
+            }}
+          >
+            {/* Media area */}
+            <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+              <MediaRenderer media={currentMedia} />
+
+              {/* Caption Overlay */}
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: '10px 16px',
+                background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%)',
+                color: '#fff',
+                fontSize: '0.8rem',
+                fontWeight: '500',
+              }}>
+                {currentMedia.caption}
+              </div>
+
+              {/* Media type badge */}
+              {currentMedia.type !== 'image' && (
+                <div style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  background: currentMedia.type === 'youtube' ? 'rgba(255,0,0,0.85)' : 'rgba(59,130,246,0.85)',
+                  color: '#fff',
+                  fontSize: '0.7rem',
+                  fontWeight: '700',
+                  padding: '3px 10px',
+                  borderRadius: '8px',
+                  letterSpacing: '0.5px',
+                }}>
+                  {currentMedia.type === 'youtube' ? '▶ YouTube' : '🎬 VIDEO'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Media Thumbnails Navigator */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <button
+              onClick={() => goMedia(-1)}
+              style={{ background: 'rgba(255,255,255,0.08)', border: `1px solid ${accentColor}40`, color: '#fff', width: '36px', height: '36px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >‹</button>
+
+            {currentProject.media.map((m, i) => (
+              <button
+                key={i}
+                onClick={() => setMediaIdx(i)}
+                style={{
+                  width: i === mediaIdx ? '28px' : '10px',
+                  height: '10px',
+                  borderRadius: '6px',
+                  backgroundColor: i === mediaIdx ? accentColor : 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  padding: 0,
+                }}
+              />
+            ))}
+
+            <button
+              onClick={() => goMedia(1)}
+              style={{ background: 'rgba(255,255,255,0.08)', border: `1px solid ${accentColor}40`, color: '#fff', width: '36px', height: '36px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >›</button>
+          </div>
+
+          {/* Project Tabs (switcher) */}
+          {categoryData.projects.length > 1 && (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {categoryData.projects.map((p, i) => (
+                <button
+                  key={i}
+                  onClick={() => goProject(i - projectIdx)}
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '6px 14px',
+                    borderRadius: '10px',
+                    border: `1px solid ${i === projectIdx ? accentColor : 'rgba(255,255,255,0.1)'}`,
+                    background: i === projectIdx ? `${accentColor}25` : 'rgba(255,255,255,0.04)',
+                    color: i === projectIdx ? '#fff' : '#64748b',
+                    cursor: 'pointer',
+                    fontWeight: i === projectIdx ? '700' : '400',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {p.title.slice(0, 22)}{p.title.length > 22 ? '…' : ''}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ---- RIGHT PANEL: Typewriter Description ---- */}
+        <div
+          style={{
+            flex: '1 1 42%',
+            backgroundColor: 'rgba(13, 14, 21, 0.92)',
+            border: `1px solid ${accentColor}35`,
+            borderRadius: '20px',
+            padding: '28px 24px',
+            boxShadow: `0 20px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)`,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            position: 'relative',
+            maxHeight: '88vh',
+            overflowY: 'auto',
+            opacity: panelVisible ? 1 : 0,
+            transform: panelVisible ? 'translateX(0)' : 'translateX(20px)',
+            transition: 'opacity 0.35s ease, transform 0.35s ease',
+          }}
+        >
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '14px',
+              right: '14px',
+              background: 'rgba(255,255,255,0.08)',
+              border: 'none',
+              color: '#fff',
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >✕</button>
+
+          {/* Category label */}
+          <div>
+            <span style={{
+              fontSize: '0.68rem',
+              fontWeight: '800',
+              letterSpacing: '2px',
+              color: accentColor,
+              textTransform: 'uppercase',
+              background: `${accentColor}18`,
+              padding: '4px 12px',
+              borderRadius: '8px',
+              border: `1px solid ${accentColor}30`,
+            }}>
+              {categoryData.categoryTitle}
+            </span>
+          </div>
+
+          {/* Typewriter Project Title */}
+          <h3 style={{
+            color: '#ffffff',
+            fontSize: '1.2rem',
+            fontWeight: '800',
+            lineHeight: '1.35',
+            minHeight: '2.7rem',
+            letterSpacing: '-0.3px',
+          }}>
+            {typedTitle}<span style={{ opacity: isDone ? 0 : 1, animation: 'cursorBlink 0.7s infinite' }}>|</span>
+          </h3>
+
+          {/* Tools badge */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '6px',
+          }}>
+            {currentProject.tools.split('•').map((tool, i) => (
+              <span key={i} style={{
+                fontSize: '0.72rem',
+                background: 'rgba(255,255,255,0.07)',
+                color: '#94a3b8',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.08)',
+                fontWeight: '500',
+              }}>
+                {tool.trim()}
+              </span>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: '40px', height: '3px', borderRadius: '3px', background: `linear-gradient(90deg, ${accentColor}, transparent)` }} />
+
+          {/* Typewriter Description */}
+          <div style={{
+            flex: 1,
+            fontSize: '0.92rem',
+            color: '#cbd5e1',
+            lineHeight: '1.75',
+            fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+            minHeight: '80px',
+          }}>
+            {typedDesc}
+            {!isDone && (
+              <span style={{ animation: 'cursorBlink 0.6s steps(1) infinite', color: accentColor }}>▌</span>
+            )}
+          </div>
+
+          {/* Media count indicator */}
+          <div style={{
+            fontSize: '0.73rem',
+            color: '#475569',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            paddingTop: '12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <span>Media {mediaIdx + 1} / {currentProject.media.length}</span>
+            <span style={{ color: accentColor, fontWeight: '600' }}>
+              {currentProject.media[mediaIdx].type === 'youtube' ? '▶ YouTube Embed' :
+               currentProject.media[mediaIdx].type === 'video' ? '🎬 Video Preview' : '🖼 Gambar'}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MAIN COMPONENT: AboutSection
+// ============================================================
 export default function AboutSection() {
-  // State Modal (null jika tertutup, atau 'bem' / 'mandiri' / 'team')
   const [activeModal, setActiveModal] = useState(null);
 
-  // State Indeks Judul Karya Utama
-  const [mainProjectIndex, setMainProjectIndex] = useState(0);
-
-  // State Indeks Foto/Dokumentasi Dalam Gambar
-  const [innerMediaIndex, setInnerMediaIndex] = useState(0);
-
-  // DATABASE KARYA LENGKAP PER KATEGORI (TETAP SAMA LENGKAP)
+  // DATABASE KARYA LENGKAP PER KATEGORI
   const modalData = {
     bem: {
       categoryTitle: '📣 Kegiatan & Media BEM',
@@ -19,31 +417,31 @@ export default function AboutSection() {
         {
           title: '🎨 Desain Poster & Feed Instagram Event',
           tools: 'Canva Pro • Photoshop',
-          desc: 'Perancangan materi publikasi visual mingguan & poster acara besar BEM untuk meningkatkan engagement followers.',
+          desc: 'Perancangan materi publikasi visual mingguan & poster acara besar BEM untuk meningkatkan engagement followers. Setiap aset visual dirancang dengan identitas visual yang konsisten, tipografi yang bersih, dan estetika yang sesuai target audiens mahasiswa.',
           media: [
             { type: 'image', url: 'https://via.placeholder.com/600x350/252638/ffffff?text=Poster+Event+1+(Canva)', caption: 'Poster Utama Event Kampus' },
             { type: 'image', url: 'https://via.placeholder.com/600x350/1e1e2f/ffffff?text=Feed+Instagram+2+(Canva)', caption: 'Microblog Carousel Feed Instagram' },
-            { type: 'image', url: 'https://via.placeholder.com/600x350/181926/ffffff?text=Pamflet+Publikasi+3+(Canva)', caption: 'Pamflet Informasi Pendaftaran' }
+            { type: 'image', url: 'https://via.placeholder.com/600x350/181926/ffffff?text=Pamflet+Publikasi+3+(Canva)', caption: 'Pamflet Informasi Pendaftaran' },
           ]
         },
         {
           title: '🎬 Video Reels Aftermath & Teaser Event',
           tools: 'Premiere Pro • CapCut Pro',
-          desc: 'Editing video dokumentasi acara, gabungan transisi dinamik, color grading, serta sound design cinematic.',
+          desc: 'Editing video dokumentasi acara, gabungan transisi dinamik, color grading, serta sound design cinematic. Hasil akhir diterbitkan sebagai Instagram Reels dan story highlight yang mencapai ribuan tayangan organik.',
           media: [
             { type: 'image', url: 'https://via.placeholder.com/600x350/181926/ffffff?text=Video+Reels+Highlight+1', caption: 'Teaser Video Instagram Reels' },
+            { type: 'youtube', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', caption: 'Contoh: Embed Demo Video Event (ganti URL)' },
             { type: 'image', url: 'https://via.placeholder.com/600x350/252638/ffffff?text=Dokumentasi+Proses+Editing+2', caption: 'Proses Video Editing di Premiere Pro' },
-            { type: 'image', url: 'https://via.placeholder.com/600x350/1e1e2f/ffffff?text=Hasil+Export+Video+3', caption: 'Dokumentasi Screening Acara' }
           ]
         },
         {
           title: '📸 Dokumentasi & Kepemimpinan Divisi Media',
           tools: 'Team Leadership • Media Management',
-          desc: 'Dokumentasi aksi lapangan, koordinasi liputan divisi, dan pengelolaan aset digital media BEM.',
+          desc: 'Dokumentasi aksi lapangan, koordinasi liputan divisi, dan pengelolaan aset digital media BEM. Bertanggung jawab atas seluruh output konten mingguan divisi media & komunikasi.',
           media: [
             { type: 'image', url: 'https://via.placeholder.com/600x350/1e1e2f/ffffff?text=Foto+Tim+Media+BEM+1', caption: 'Foto Bersama Divisi Media & Komunikasi' },
             { type: 'image', url: 'https://via.placeholder.com/600x350/181926/ffffff?text=Dokumentasi+Liputan+2', caption: 'Dokumentasi Tugas Liputan Lapangan' },
-            { type: 'image', url: 'https://via.placeholder.com/600x350/252638/ffffff?text=Rapat+Koordinasi+3', caption: 'Rapat Perencanaan Media BEM' }
+            { type: 'image', url: 'https://via.placeholder.com/600x350/252638/ffffff?text=Rapat+Koordinasi+3', caption: 'Rapat Perencanaan Media BEM' },
           ]
         }
       ]
@@ -55,21 +453,21 @@ export default function AboutSection() {
         {
           title: '🌐 Interactive Portfolio Web (React 3D)',
           tools: 'React JS • CSS 3D • Figma',
-          desc: 'Pengembangan portofolio web interaktif dengan fitur Lanyard 3D Drag & Drop, Modal Carousel, dan Bento Grid.',
+          desc: 'Pengembangan portofolio web interaktif dengan fitur Lanyard 3D Drag & Drop, Modal Carousel, dan Bento Grid. Dibangun menggunakan React + Vite, dengan animasi halus berbasis Web Audio API dan efek glassmorphism premium.',
           media: [
             { type: 'image', url: 'https://via.placeholder.com/600x350/181926/ffffff?text=Hero+Section+Lanyard+1', caption: 'Tampilan Utama Hero Lanyard 3D' },
             { type: 'image', url: 'https://via.placeholder.com/600x350/252638/ffffff?text=Bento+Grid+Tentang+Saya+2', caption: 'Bagian Bento Grid Interaktif' },
-            { type: 'image', url: 'https://via.placeholder.com/600x350/1e1e2f/ffffff?text=Responsive+Mobile+View+3', caption: 'Tampilan Mobile Responsive' }
+            { type: 'image', url: 'https://via.placeholder.com/600x350/1e1e2f/ffffff?text=Responsive+Mobile+View+3', caption: 'Tampilan Mobile Responsive' },
           ]
         },
         {
           title: '🎨 UI/UX E-Commerce Redesign Concept',
           tools: 'Figma • UI/UX Design',
-          desc: 'Rancangan desain antarmuka aplikasi belanja online dengan pendekatan kenyamanan navigasi pengguna.',
+          desc: 'Rancangan desain antarmuka aplikasi belanja online dengan pendekatan kenyamanan navigasi pengguna. Meliputi wireframing, user flow, hi-fi prototype, dan design system lengkap dengan komponen reusable.',
           media: [
             { type: 'image', url: 'https://via.placeholder.com/600x350/252638/ffffff?text=Figma+Wireframe+1', caption: 'Wireframing & Flowchart' },
             { type: 'image', url: 'https://via.placeholder.com/600x350/1e1e2f/ffffff?text=High+Fidelity+UI+2', caption: 'High-Fidelity UI Design' },
-            { type: 'image', url: 'https://via.placeholder.com/600x350/181926/ffffff?text=Design+System+3', caption: 'Design System & Color Palette' }
+            { type: 'image', url: 'https://via.placeholder.com/600x350/181926/ffffff?text=Design+System+3', caption: 'Design System & Color Palette' },
           ]
         }
       ]
@@ -81,90 +479,82 @@ export default function AboutSection() {
         {
           title: '🚀 Digitalisasi Sistem Informasi Kampus',
           tools: 'React JS • Figma • Team Collaboration',
-          desc: 'Fokus Saya: Lead Frontend & UI/UX Designer. Bertanggung jawab memimpin desain antarmuka dan implementasi komponen React.',
+          desc: 'Fokus Saya: Lead Frontend & UI/UX Designer. Bertanggung jawab memimpin desain antarmuka dan implementasi komponen React. Berkolaborasi dengan backend developer untuk integrasi API dan validasi data form.',
           media: [
             { type: 'image', url: 'https://via.placeholder.com/600x350/1e1e2f/ffffff?text=Tampilan+Dashboard+Tim+1', caption: 'Dashboard Sistem Informasi Kampus' },
             { type: 'image', url: 'https://via.placeholder.com/600x350/181926/ffffff?text=Kolaborasi+Figma+2', caption: 'Sesi Kolaborasi UI/UX di Figma' },
-            { type: 'image', url: 'https://via.placeholder.com/600x350/252638/ffffff?text=Testing+Frontend+React+3', caption: 'Testing Kode Frontend Bersama Tim' }
+            { type: 'image', url: 'https://via.placeholder.com/600x350/252638/ffffff?text=Testing+Frontend+React+3', caption: 'Testing Kode Frontend Bersama Tim' },
           ]
         }
       ]
     }
   };
 
-  const openCategoryModal = (categoryKey) => {
-    setActiveModal(categoryKey);
-    setMainProjectIndex(0);
-    setInnerMediaIndex(0);
-  };
-
-  const handleNextProject = (totalProjects) => {
-    setMainProjectIndex((prev) => (prev + 1) % totalProjects);
-    setInnerMediaIndex(0);
-  };
-
-  const handlePrevProject = (totalProjects) => {
-    setMainProjectIndex((prev) => (prev - 1 + totalProjects) % totalProjects);
-    setInnerMediaIndex(0);
-  };
-
-  const handleNextInnerMedia = (totalMedia) => {
-    setInnerMediaIndex((prev) => (prev + 1) % totalMedia);
-  };
-
-  const handlePrevInnerMedia = (totalMedia) => {
-    setInnerMediaIndex((prev) => (prev - 1 + totalMedia) % totalMedia);
-  };
-
   return (
-    <section id="tentang-saya" style={{ 
-      paddingTop: '60px', 
-      paddingBottom: '80px',
-      width: '100%',
-      maxWidth: '1200px',
-      margin: '0 auto',
-      paddingLeft: '15px',
-      paddingRight: '15px',
-      boxSizing: 'border-box',
-      position: 'relative'
-    }}>
-      
-      {/* GLOW LIGHT BACKGROUND DIBELAKANG SECTION */}
-      <div style={{
-        position: 'absolute',
-        top: '20%',
-        left: '10%',
-        width: '350px',
-        height: '250px',
-        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%)',
-        filter: 'blur(60px)',
-        pointerEvents: 'none'
-      }} />
+    <>
+      {/* CURSOR BLINK KEYFRAME injected once */}
+      <style>{`
+        @keyframes cursorBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(30px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes categoryCardHover {
+          from { transform: translateY(0); }
+          to { transform: translateY(-4px); }
+        }
+      `}</style>
 
-      {/* HEADER SECTION */}
-      <div style={{ marginBottom: '28px', textAlign: 'left' }}>
-        <span style={{ 
-          fontSize: '0.78rem', 
-          fontWeight: 'bold', 
-          letterSpacing: '1.5px', 
-          color: '#60a5fa', 
-          textTransform: 'uppercase',
-          background: 'rgba(59, 130, 246, 0.12)',
-          padding: '6px 16px',
-          borderRadius: '20px',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          boxShadow: '0 0 15px rgba(59, 130, 246, 0.15)'
-        }}>
-          💡 LATAR BELAKANG
-        </span>
-        <h2 style={{ fontSize: '2.5rem', color: '#ffffff', marginTop: '12px', fontWeight: '800', letterSpacing: '-0.5px' }}>
-          Tentang Saya
-        </h2>
-      </div>
+      <section id="tentang-saya" style={{
+        paddingTop: '60px',
+        paddingBottom: '80px',
+        width: '100%',
+        maxWidth: '1280px',
+        margin: '0 auto',
+        paddingLeft: '24px',
+        paddingRight: '24px',
+        boxSizing: 'border-box',
+        position: 'relative'
+      }}>
 
-      {/* PANEL BIO UTAMA (VISUAL GLASSMORPHISM + HYBRID CARD) */}
-      <div 
-        style={{
+        {/* GLOW LIGHT BACKGROUND */}
+        <div style={{
+          position: 'absolute',
+          top: '20%',
+          left: '10%',
+          width: '350px',
+          height: '250px',
+          background: 'radial-gradient(circle, var(--accent-glow, rgba(59, 130, 246, 0.12)) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          pointerEvents: 'none'
+        }} />
+
+        {/* HEADER SECTION */}
+        <div style={{ marginBottom: '28px', textAlign: 'left' }}>
+          <span style={{
+            fontSize: '0.78rem',
+            fontWeight: 'bold',
+            letterSpacing: '1.5px',
+            color: 'var(--accent-secondary, #60a5fa)',
+            textTransform: 'uppercase',
+            background: 'rgba(59, 130, 246, 0.12)',
+            padding: '6px 16px',
+            borderRadius: '20px',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            boxShadow: '0 0 15px var(--accent-glow, rgba(59, 130, 246, 0.15))'
+          }}>
+            💡 LATAR BELAKANG
+          </span>
+          <h2 style={{ fontSize: '2.5rem', color: '#ffffff', marginTop: '12px', fontWeight: '800', letterSpacing: '-0.5px' }}>
+            Tentang Saya
+          </h2>
+        </div>
+
+        {/* PANEL BIO UTAMA */}
+        <div style={{
           backgroundColor: 'rgba(19, 20, 31, 0.75)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
@@ -174,396 +564,179 @@ export default function AboutSection() {
           boxShadow: '0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
           marginBottom: '28px',
           textAlign: 'left'
-        }}
-      >
-        {/* PARAGRAF HOOK UTAMA */}
-        <p style={{ color: '#ffffff', fontSize: '1.12rem', lineHeight: '1.75', marginBottom: '18px', fontWeight: '600' }}>
-          Saya adalah mahasiswi S1 Teknik Informatika di Universitas Esa Unggul yang berfokus pada{' '}
-          <span style={{ 
-            background: 'linear-gradient(135deg, #60a5fa 0%, #c084fc 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: '800'
+        }}>
+          <p style={{ color: '#ffffff', fontSize: '1.12rem', lineHeight: '1.75', marginBottom: '18px', fontWeight: '600' }}>
+            Saya adalah mahasiswi S1 Teknik Informatika di Universitas Esa Unggul yang berfokus pada{' '}
+            <span style={{
+              background: 'linear-gradient(135deg, var(--accent-secondary, #60a5fa) 0%, #c084fc 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: '800'
+            }}>
+              web development (React)
+            </span>, perancangan UI/UX, serta eksekusi media kreatif seperti desain visual dan <i>video editing</i>.
+          </p>
+
+          <p style={{ color: '#cbd5e1', fontSize: '0.96rem', lineHeight: '1.7', marginBottom: '24px' }}>
+            Berbekal pengalaman di lingkungan manufaktur (PT Akebono Brake Astra & PT TOA Galva) serta peran aktif di divisi media BEM, saya terbiasa memproses ide kreatif menjadi produk digital yang estetis, terstruktur, dan efisien.
+          </p>
+
+          {/* MINI CARDS HIGHLIGHTS */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: '16px',
+            marginBottom: '26px'
           }}>
-            web development (React)
-          </span>, perancangan UI/UX, serta eksekusi media kreatif seperti desain visual dan <i>video editing</i>.
-        </p>
+            <div className="glass-card" style={{ padding: '16px 20px' }}>
+              <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>🎓 Akademik</span>
+              <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>S1 Teknik Informatika</strong>
+              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Universitas Esa Unggul</span>
+            </div>
 
-        {/* PARAGRAF PENGALAMAN & INDUSTRI */}
-        <p style={{ color: '#cbd5e1', fontSize: '0.96rem', lineHeight: '1.7', marginBottom: '24px' }}>
-          Berbekal pengalaman di lingkungan manufaktur (PT Akebono Brake Astra & PT TOA Galva) serta peran aktif di divisi media BEM, saya terbiasa memproses ide kreatif menjadi produk digital yang estetis, terstruktur, dan efisien.
-        </p>
+            <div className="glass-card" style={{ padding: '16px 20px' }}>
+              <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>🏭 Pengalaman Industri</span>
+              <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>Ketelitian & Process Efficiency</strong>
+              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>PT Akebono & PT TOA Galva</span>
+            </div>
 
-        {/* MINI CARDS HIGHLIGHTS (Bikin Kelihatan "Real" & Interaktif) */}
+            <div className="glass-card" style={{ padding: '16px 20px' }}>
+              <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>🎨 Media & Organisasi</span>
+              <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>Desain Visual & Video Editing</strong>
+              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Divisi Media BEM</span>
+            </div>
+          </div>
+
+          {/* BOTTOM TAGS & STATUS BADGE */}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                📍 Jakarta, Indonesia
+              </span>
+              <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                ⚡ Fast Learner
+              </span>
+              <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                🎯 Adaptif & Disiplin
+              </span>
+            </div>
+
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.25)',
+              padding: '6px 14px',
+              borderRadius: '12px',
+              fontSize: '0.78rem',
+              color: '#4ade80',
+              fontWeight: '600'
+            }}>
+              <span style={{ width: '8px', height: '8px', backgroundColor: '#22c55e', borderRadius: '50%', boxShadow: '0 0 8px #22c55e' }}></span>
+              Ready to Collaborate
+            </div>
+          </div>
+        </div>
+
+        {/* HEADER KARYA */}
+        <div style={{ marginBottom: '18px', textAlign: 'left' }}>
+          <h3 style={{ fontSize: '1.5rem', color: '#ffffff', fontWeight: '800', marginBottom: '6px' }}>
+            Portofolio Karya
+          </h3>
+          <p style={{ color: '#64748b', fontSize: '0.85rem' }}>
+            Klik kategori untuk membuka galeri interaktif — efek 3D tilt + penjelasan live typing ✨
+          </p>
+        </div>
+
+        {/* 3 KOTAK PINTU MASUK KARYA */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '16px',
-          marginBottom: '26px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '20px'
         }}>
-          {/* Card Mini 1 */}
-          <div style={{
-            background: 'rgba(24, 25, 38, 0.6)',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            borderRadius: '18px',
-            padding: '16px 20px',
-            transition: 'all 0.3s ease'
-          }}>
-            <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>🎓 Akademik</span>
-            <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>S1 Teknik Informatika</strong>
-            <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Universitas Esa Unggul</span>
-          </div>
-
-          {/* Card Mini 2 */}
-          <div style={{
-            background: 'rgba(24, 25, 38, 0.6)',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            borderRadius: '18px',
-            padding: '16px 20px',
-            transition: 'all 0.3s ease'
-          }}>
-            <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>🏭 Pengalaman Industri</span>
-            <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>Ketelitian & Process Efficiency</strong>
-            <span style={{ color: '#64748b', fontSize: '0.8rem' }}>PT Akebono & PT TOA Galva</span>
-          </div>
-
-          {/* Card Mini 3 */}
-          <div style={{
-            background: 'rgba(24, 25, 38, 0.6)',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            borderRadius: '18px',
-            padding: '16px 20px',
-            transition: 'all 0.3s ease'
-          }}>
-            <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>🎨 Media & Organisasi</span>
-            <strong style={{ color: '#ffffff', fontSize: '0.9rem', display: 'block' }}>Desain Visual & Video Editing</strong>
-            <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Divisi Media BEM</span>
-          </div>
-        </div>
-
-        {/* BOTTOM TAGS & STATUS BADGE */}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-              📍 Jakarta, Indonesia
-            </span>
-            <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-              ⚡ Fast Learner
-            </span>
-            <span style={{ fontSize: '0.78rem', background: 'rgba(24, 25, 38, 0.8)', color: '#94a3b8', padding: '6px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-              🎯 Adaptif & Disiplin
-            </span>
-          </div>
-
-          {/* STATUS PULSE GREEN */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'rgba(34, 197, 94, 0.1)',
-            border: '1px solid rgba(34, 197, 94, 0.25)',
-            padding: '6px 14px',
-            borderRadius: '12px',
-            fontSize: '0.78rem',
-            color: '#4ade80',
-            fontWeight: '600'
-          }}>
-            <span style={{ width: '8px', height: '8px', backgroundColor: '#22c55e', borderRadius: '50%', boxShadow: '0 0 8px #22c55e' }}></span>
-            Ready to Collaborate
-          </div>
-        </div>
-      </div>
-
-      {/* 3 KOTAK PINTU MASUK KARYA (DENGAN HOVER GLOW BERWARNA BISA DIKLIK) */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: '20px'
-      }}>
-        {[
-          { id: 'bem', icon: '📣', title: 'Kegiatan & Media BEM', desc: 'Desain poster Canva, editan video event, dan foto dokumentasi.', color: '#a855f7' },
-          { id: 'mandiri', icon: '💻', title: 'Project Mandiri', desc: 'Eksperimen personal, web app, tools, dan penjelasan fokus teknis.', color: '#3b82f6' },
-          { id: 'team', icon: '👥', title: 'Project Team', desc: 'Kolaborasi tim, role & jobdesk spesifik, serta hasil akhir proyek.', color: '#22c55e' }
-        ].map((item) => (
-          <div 
-            key={item.id}
-            onClick={() => openCategoryModal(item.id)}
-            style={{
-              backgroundColor: 'rgba(19, 20, 31, 0.75)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-              borderRadius: '20px',
-              padding: '22px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = item.color;
-              e.currentTarget.style.transform = 'translateY(-5px)';
-              e.currentTarget.style.boxShadow = `0 12px 30px ${item.color}33`;
-              e.currentTarget.style.backgroundColor = 'rgba(28, 29, 45, 0.9)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-              e.currentTarget.style.backgroundColor = 'rgba(19, 20, 31, 0.75)';
-            }}
-          >
-            <div style={{ fontSize: '1.5rem', background: 'rgba(24, 25, 38, 0.9)', padding: '12px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)' }}>
-              {item.icon}
-            </div>
-            <div>
-              <h4 style={{ color: '#ffffff', fontSize: '1rem', margin: '0 0 4px 0', fontWeight: '700' }}>{item.title}</h4>
-              <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: 0, lineHeight: '1.4' }}>{item.desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ========================================================================= */}
-      {/* MODAL POP-UP DI TENGAH LAYAR (LENGKAP SEMUA NAVIGASI & SLIDER) */}
-      {/* ========================================================================= */}
-      {activeModal && (() => {
-        const currentCategory = modalData[activeModal];
-        const currentProject = currentCategory.projects[mainProjectIndex];
-        const currentMedia = currentProject.media[innerMediaIndex];
-        const totalProjects = currentCategory.projects.length;
-        const totalMedia = currentProject.media.length;
-
-        return (
-          <div 
-            onClick={() => setActiveModal(null)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.85)',
-              backdropFilter: 'blur(10px)',
-              zIndex: 999,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '20px'
-            }}
-          >
-            <div 
-              onClick={(e) => e.stopPropagation()}
+          {[
+            { id: 'bem', icon: '📣', title: 'Kegiatan & Media BEM', desc: 'Desain poster Canva, editan video event, dan foto dokumentasi.', color: '#a855f7' },
+            { id: 'mandiri', icon: '💻', title: 'Project Mandiri', desc: 'Eksperimen personal, web app, tools, dan penjelasan fokus teknis.', color: '#3b82f6' },
+            { id: 'team', icon: '👥', title: 'Project Team', desc: 'Kolaborasi tim, role & jobdesk spesifik, serta hasil akhir proyek.', color: '#22c55e' }
+          ].map((item) => (
+            <div
+              key={item.id}
+              onClick={() => setActiveModal(item.id)}
+              className="glass-card"
               style={{
-                width: '100%',
-                maxWidth: '750px',
-                backgroundColor: '#13141f',
-                border: `2px solid ${currentCategory.color}`,
-                borderRadius: '24px',
-                padding: '30px',
-                boxSizing: 'border-box',
-                position: 'relative',
-                boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 30px ${currentCategory.color}30`,
+                padding: '24px',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '18px'
+                alignItems: 'center',
+                gap: '18px',
+                cursor: 'pointer',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-5px)';
+                e.currentTarget.style.borderColor = item.color;
+                e.currentTarget.style.boxShadow = `0 16px 40px ${item.color}30`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = '';
+                e.currentTarget.style.borderColor = '';
+                e.currentTarget.style.boxShadow = '';
               }}
             >
-              {/* Tombol Close (✕) */}
-              <button 
-                onClick={() => setActiveModal(null)}
-                style={{
-                  position: 'absolute',
-                  top: '18px',
-                  right: '18px',
-                  background: '#181926',
-                  border: '1px solid #2d2d3f',
-                  color: '#fff',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                  zIndex: 10
-                }}
-              >
-                ✕
-              </button>
+              {/* Subtle color glow bg */}
+              <div style={{
+                position: 'absolute',
+                top: 0, right: 0,
+                width: '80px', height: '80px',
+                background: `radial-gradient(circle, ${item.color}20 0%, transparent 70%)`,
+                borderRadius: '50%',
+                pointerEvents: 'none',
+              }} />
 
-              {/* Sub-Header Modal Category */}
-              <div>
-                <span style={{ color: currentCategory.color, fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  {currentCategory.categoryTitle}
-                </span>
-                <p style={{ color: '#64748b', fontSize: '0.78rem', margin: '2px 0 0 0' }}>
-                  Karya {mainProjectIndex + 1} dari {totalProjects}
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '16px',
+                backgroundColor: `${item.color}20`,
+                border: `1px solid ${item.color}50`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.6rem',
+                flexShrink: 0,
+              }}>
+                {item.icon}
+              </div>
+
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <h4 style={{ color: '#ffffff', fontSize: '1.05rem', margin: '0 0 5px 0', fontWeight: 'bold' }}>
+                  {item.title}
+                </h4>
+                <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0, lineHeight: '1.4' }}>
+                  {item.desc}
                 </p>
               </div>
 
-              {/* NAVIGASI UTAMA (PANAH KIRI & KANAN UTAMA) + JUDUL KARYA */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '15px' }}>
-                <button 
-                  onClick={() => handlePrevProject(totalProjects)}
-                  style={{
-                    background: '#181926',
-                    border: '1px solid #2d2d3f',
-                    color: '#fff',
-                    padding: '8px 14px',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                    fontSize: '0.9rem'
-                  }}
-                  title="Ke Judul Sebelumnya"
-                >
-                  ◀
-                </button>
-
-                <div style={{ textAlign: 'center', flex: 1 }}>
-                  <h3 style={{ color: '#ffffff', fontSize: '1.25rem', margin: '0 0 4px 0', fontWeight: '800' }}>
-                    {currentProject.title}
-                  </h3>
-                  <span style={{ fontSize: '0.78rem', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '3px 10px', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-                    Tools: {currentProject.tools}
-                  </span>
-                </div>
-
-                <button 
-                  onClick={() => handleNextProject(totalProjects)}
-                  style={{
-                    background: '#181926',
-                    border: '1px solid #2d2d3f',
-                    color: '#fff',
-                    padding: '8px 14px',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                    fontSize: '0.9rem'
-                  }}
-                  title="Ke Judul Selanjutnya"
-                >
-                  ▶
-                </button>
-              </div>
-
-              {/* INNER SLIDER: AREA GAMBAR DENGAN PANAH DIDALAMNYA */}
-              <div style={{
-                position: 'relative',
-                width: '100%',
-                height: '320px',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                border: '1px solid #2d2d3f',
-                backgroundColor: '#181926'
-              }}>
-                <img 
-                  src={currentMedia.url} 
-                  alt={currentMedia.caption} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-
-                {/* Panah Kiri Inner Gambar */}
-                {totalMedia > 1 && (
-                  <button 
-                    onClick={() => handlePrevInnerMedia(totalMedia)}
-                    style={{
-                      position: 'absolute',
-                      left: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'rgba(19, 20, 31, 0.75)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      color: '#fff',
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    ❮
-                  </button>
-                )}
-
-                {/* Panah Kanan Inner Gambar */}
-                {totalMedia > 1 && (
-                  <button 
-                    onClick={() => handleNextInnerMedia(totalMedia)}
-                    style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'rgba(19, 20, 31, 0.75)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      color: '#fff',
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    ❯
-                  </button>
-                )}
-
-                {/* Indikator Caption Foto */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '12px',
-                  left: '12px',
-                  right: '12px',
-                  background: 'rgba(19, 20, 31, 0.85)',
-                  backdropFilter: 'blur(6px)',
-                  padding: '6px 14px',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: '500' }}>
-                    {currentMedia.caption}
-                  </span>
-                  <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
-                    {innerMediaIndex + 1} / {totalMedia}
-                  </span>
-                </div>
-              </div>
-
-              {/* INDIKATOR TITIK (PAGINATION DOTS) UNTUK INNER SLIDER */}
-              {totalMedia > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '-8px' }}>
-                  {currentProject.media.map((_, idx) => (
-                    <span 
-                      key={idx}
-                      onClick={() => setInnerMediaIndex(idx)}
-                      style={{
-                        width: idx === innerMediaIndex ? '20px' : '8px',
-                        height: '8px',
-                        borderRadius: '4px',
-                        backgroundColor: idx === innerMediaIndex ? currentCategory.color : '#2d2d3f',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease'
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Deskripsi Singkat Karya */}
-              <p style={{ color: '#cbd5e1', fontSize: '0.88rem', lineHeight: '1.6', margin: 0, textAlign: 'center' }}>
-                {currentProject.desc}
-              </p>
-
+              <span style={{
+                color: item.color,
+                fontWeight: 'bold',
+                fontSize: '1.3rem',
+                transition: 'transform 0.2s',
+              }}>→</span>
             </div>
-          </div>
-        );
-      })()}
+          ))}
+        </div>
 
-    </section>
+      </section>
+
+      {/* INTERACTIVE 3D MODAL */}
+      {activeModal && modalData[activeModal] && (
+        <ProjectModal
+          categoryData={modalData[activeModal]}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
+    </>
   );
 }
