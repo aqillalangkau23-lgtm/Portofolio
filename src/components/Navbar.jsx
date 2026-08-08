@@ -67,7 +67,7 @@ export default function Navbar({ onOpenPalette }) {
         </a>
 
         {/* MENU NAVIGASI KANAN (STANDAR KELAS 1280px MODERN) */}
-        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+        <div className="navbar-links" style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
           {/* Quick Palette Trigger */}
           <button
             onClick={() => onOpenPalette(true)}

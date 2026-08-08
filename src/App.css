@@ -98,3 +98,227 @@ html, body, #root {
 .border-accent {
   border-color: var(--accent-primary) !important;
 }
+
+/* ============================================================
+   HERO SECTION — RESPONSIVE LAYOUT CLASSES
+   ============================================================ */
+
+/* --- Layout Grid: 2-col desktop, 1-col mobile --- */
+.hero-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 40px;
+  padding: 30px 40px 50px 40px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+  position: relative;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+/* --- Left Text Column --- */
+.hero-text-col {
+  z-index: 2;
+  text-align: left;
+  min-width: 0;
+}
+
+/* --- Right Lanyard Column --- */
+.hero-lanyard-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding-top: 20px;
+  z-index: 2;
+}
+
+/* --- Hero Title (name) --- */
+.hero-title {
+  font-size: 3.6rem;
+  color: #ffffff;
+  line-height: 1.1;
+  margin: 8px 0 16px 0;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+/* --- Bento Stats Grid --- */
+.hero-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+  max-width: 580px;
+}
+
+/* --- Music Widget --- */
+.hero-music-widget {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 18px;
+  background: rgba(19, 20, 31, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  max-width: 580px;
+  box-sizing: border-box;
+}
+
+/* --- ID Card Wrapper --- */
+.hero-id-card-wrapper {
+  position: relative;
+  margin-top: 135px;
+  width: 290px;
+  height: 400px;
+}
+
+/* --- SVG Lanyard Strap --- */
+.hero-lanyard-svg {
+  position: absolute;
+  top: -25px;
+  width: 300px;
+  height: 180px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ============================================================
+   TABLET  (max-width: 1024px)
+   ============================================================ */
+@media (max-width: 1024px) {
+  .hero-section {
+    padding: 30px 28px 50px 28px;
+    gap: 28px;
+  }
+
+  .hero-title {
+    font-size: 2.8rem;
+  }
+
+  .hero-bento-grid {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 100%;
+  }
+
+  .hero-music-widget {
+    max-width: 100%;
+  }
+}
+
+/* ============================================================
+   MOBILE  (max-width: 768px) — Single column stacked layout
+   ============================================================ */
+@media (max-width: 768px) {
+  .hero-section {
+    grid-template-columns: 1fr;       /* Single column! */
+    padding: 24px 18px 48px 18px;
+    gap: 0;
+    min-height: unset;
+    padding-top: 80px;                /* space below fixed navbar */
+  }
+
+  .hero-text-col {
+    order: 1;                         /* Text first */
+    text-align: left;
+  }
+
+  .hero-title {
+    font-size: 2.1rem;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+
+  .hero-bento-grid {
+    grid-template-columns: repeat(3, 1fr); /* still 3 but smaller */
+    gap: 10px;
+    max-width: 100%;
+  }
+
+  .hero-music-widget {
+    max-width: 100%;
+    padding: 10px 14px;
+  }
+
+  /* Lanyard column comes AFTER text */
+  .hero-lanyard-col {
+    order: 2;
+    margin-top: 50px;                 /* gap between text and card */
+    padding-top: 0;
+  }
+
+  /* Scale down the ID card proportionally */
+  .hero-id-card-wrapper {
+    width: 250px;
+    height: 345px;
+    margin-top: 115px;
+  }
+
+  /* Shrink the SVG strap */
+  .hero-lanyard-svg {
+    width: 260px;
+    height: 155px;
+  }
+}
+
+/* ============================================================
+   SMALL MOBILE  (max-width: 400px)
+   ============================================================ */
+@media (max-width: 400px) {
+  .hero-title {
+    font-size: 1.85rem;
+  }
+
+  .hero-section {
+    padding: 70px 14px 40px 14px;
+  }
+
+  .hero-bento-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .hero-id-card-wrapper {
+    width: 230px;
+    height: 318px;
+    margin-top: 105px;
+  }
+
+  .hero-lanyard-svg {
+    width: 240px;
+    height: 140px;
+  }
+}
+
+/* ============================================================
+   ABOUT SECTION — RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Bio panel padding */
+  #tentang-saya {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-top: 40px !important;
+  }
+
+  /* project modal becomes full-screen on mobile */
+  .project-modal-container {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    max-height: 90vh;
+  }
+}
+
+/* ============================================================
+   NAVBAR — RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .navbar-links {
+    display: none !important;
+  }
+}

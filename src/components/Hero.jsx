@@ -144,27 +144,31 @@ export default function Hero() {
     };
   }, [isDragging]);
 
-  // Handler Mouse Drag Lanyard
+  // Handler Mouse / Touch Drag Lanyard
   const handleMouseDown = (e) => {
     setIsDragging(true);
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    startPos.current = { x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y };
-    lastPos.current = { x: e.clientX, y: e.clientY };
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startPos.current = { x: clientX - dragOffset.x, y: clientY - dragOffset.y };
+    lastPos.current = { x: clientX, y: clientY };
   };
 
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging) return;
-      const newX = e.clientX - startPos.current.x;
-      const newY = e.clientY - startPos.current.y;
-      
-      const vx = e.clientX - lastPos.current.x;
-      const vy = e.clientY - lastPos.current.y;
-      lastPos.current = { x: e.clientX, y: e.clientY };
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const newX = clientX - startPos.current.x;
+      const newY = clientY - startPos.current.y;
+
+      const vx = clientX - lastPos.current.x;
+      const vy = clientY - lastPos.current.y;
+      lastPos.current = { x: clientX, y: clientY };
 
       setDragOffset({
-        x: Math.max(-180, Math.min(180, newX)),
-        y: Math.max(-20, Math.min(220, newY))
+        x: Math.max(-150, Math.min(150, newX)),
+        y: Math.max(-20, Math.min(180, newY))
       });
       setVelocity({ x: vx, y: vy });
     };
@@ -179,11 +183,15 @@ export default function Hero() {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleMouseMove, { passive: true });
+      window.addEventListener('touchend', handleMouseUp);
     }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
     };
   }, [isDragging]);
 
@@ -194,7 +202,7 @@ export default function Hero() {
     const rect = card.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
@@ -235,29 +243,16 @@ export default function Hero() {
   const pendulumAngle = dragOffset.x * 0.18 + velocity.x * 0.4;
 
   return (
-    <section 
-      style={{ 
-        position: 'relative',
-        width: '100%',
-        maxWidth: '1280px',
-        margin: '0 auto',
-        minHeight: 'calc(100vh - 80px)',
-        padding: '30px 24px 50px 24px',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        alignItems: 'center',
-        gap: '40px',
-        userSelect: 'none',
-        boxSizing: 'border-box'
-      }}
-    >
+    // ✅ Uses .hero-section CSS class — responsive via @media in App.css
+    <section className="hero-section">
+
       {/* 🌌 SOFT AMBIENT GLOW BACKGROUND */}
       <div style={{
         position: 'absolute',
         top: '10%',
         left: '-2%',
-        width: '550px',
-        height: '550px',
+        width: '500px',
+        height: '500px',
         background: 'radial-gradient(circle, var(--accent-glow, rgba(59, 130, 246, 0.12)) 0%, transparent 70%)',
         zIndex: 0,
         pointerEvents: 'none',
@@ -268,17 +263,20 @@ export default function Hero() {
         position: 'absolute',
         bottom: '0%',
         right: '2%',
-        width: '500px',
-        height: '500px',
+        width: '400px',
+        height: '400px',
         background: 'radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%)',
         zIndex: 0,
         pointerEvents: 'none',
         filter: 'blur(100px)'
       }} />
 
-      {/* 📦 SISI KIRI: TEKS INFORMASI (TATA LENGKAP IDEAL 1280px GRID) */}
-      <div style={{ zIndex: 2, textAlign: 'left', maxWidth: '640px' }}>
-        
+      {/* ======================================================
+          📦 SISI KIRI: TEKS INFORMASI
+          Uses .hero-text-col for responsive order/alignment
+          ====================================================== */}
+      <div className="hero-text-col">
+
         {/* Badge Status */}
         <div style={{
           display: 'inline-flex',
@@ -301,32 +299,32 @@ export default function Hero() {
           — S1 INFORMATIKA
         </p>
 
-        {/* NAMA LENGKAP UTAMA */}
-        <h1 style={{ fontSize: '3.6rem', color: '#ffffff', lineHeight: '1.1', margin: '8px 0 16px 0', fontWeight: '800', letterSpacing: '-1px' }}>
+        {/* ✅ NAMA — uses .hero-title for responsive font-size */}
+        <h1 className="hero-title">
           Aqilla Sofia<br />Yaqutah Langkau
         </h1>
 
-        <h3 style={{ fontSize: '1.3rem', color: '#cbd5e1', fontWeight: '500', marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '1.15rem', color: '#cbd5e1', fontWeight: '500', marginBottom: '16px' }}>
           Saya seorang <span style={{ color: 'var(--accent-secondary, #60a5fa)', fontWeight: '700', borderBottom: '2px dashed var(--accent-primary, #3b82f6)' }}>{roles[currentRole]}</span>
         </h3>
 
-        <p style={{ fontSize: '0.95rem', color: '#94a3b8', marginBottom: '32px', lineHeight: '1.7', maxWidth: '580px' }}>
+        <p style={{ fontSize: '0.93rem', color: '#94a3b8', marginBottom: '28px', lineHeight: '1.7', maxWidth: '560px' }}>
           Halo! Saya Aqilla, mahasiswi Teknik Informatika Universitas Esa Unggul. Memiliki ketertarikan mendalam pada pengembangan antarmuka web, perancangan desain visual, <i>video editing</i>, dan pembuatan konten media yang interaktif.
         </p>
 
         {/* Tombol Action */}
-        <div style={{ display: 'flex', gap: '14px', marginBottom: '36px', flexWrap: 'wrap' }}>
-          <a 
-            href="#tentang-saya" 
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '30px', flexWrap: 'wrap' }}>
+          <a
+            href="#tentang-saya"
             onClick={(e) => scrollToSection(e, 'tentang-saya')}
-            style={{ 
+            style={{
               textDecoration: 'none',
               background: 'linear-gradient(135deg, var(--accent-primary, #3b82f6) 0%, #2563eb 100%)',
               color: '#ffffff',
-              padding: '12px 26px',
+              padding: '11px 24px',
               borderRadius: '12px',
               fontWeight: '700',
-              fontSize: '0.9rem',
+              fontSize: '0.88rem',
               boxShadow: '0 10px 20px var(--accent-glow, rgba(59, 130, 246, 0.3))',
               transition: 'all 0.3s ease',
               display: 'inline-flex',
@@ -336,19 +334,19 @@ export default function Hero() {
             Lihat Portofolio ↓
           </a>
 
-          <a 
-            href="https://wa.me/6285813462446" 
-            target="_blank" 
+          <a
+            href="https://wa.me/6285813462446"
+            target="_blank"
             rel="noopener noreferrer"
-            style={{ 
+            style={{
               textDecoration: 'none',
               background: 'rgba(24, 25, 38, 0.8)',
               color: '#ffffff',
               border: '1px solid rgba(255, 255, 255, 0.15)',
-              padding: '12px 26px',
+              padding: '11px 24px',
               borderRadius: '12px',
               fontWeight: '700',
-              fontSize: '0.9rem',
+              fontSize: '0.88rem',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
@@ -359,49 +357,32 @@ export default function Hero() {
           </a>
         </div>
 
-        {/* 📊 BENTO GRID CARDS */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '14px',
-          marginBottom: '18px',
-          maxWidth: '580px'
-        }}>
-          <div className="glass-card" style={{ padding: '16px' }}>
-            <h4 style={{ color: '#ffffff', fontSize: '1.3rem', fontWeight: '800', margin: '0 0 4px 0' }}>2+</h4>
-            <p style={{ color: '#64748b', fontSize: '0.72rem', margin: 0, fontWeight: '500' }}>Pengalaman Industri</p>
+        {/* ✅ BENTO GRID — uses .hero-bento-grid for responsive columns */}
+        <div className="hero-bento-grid">
+          <div className="glass-card" style={{ padding: '14px 12px' }}>
+            <h4 style={{ color: '#ffffff', fontSize: '1.25rem', fontWeight: '800', margin: '0 0 4px 0' }}>2+</h4>
+            <p style={{ color: '#64748b', fontSize: '0.7rem', margin: 0, fontWeight: '500' }}>Pengalaman Industri</p>
           </div>
 
-          <div className="glass-card" style={{ padding: '16px' }}>
-            <h4 style={{ color: '#ffffff', fontSize: '1.3rem', fontWeight: '800', margin: '0 0 4px 0' }}>BEM</h4>
-            <p style={{ color: '#64748b', fontSize: '0.72rem', margin: 0, fontWeight: '500' }}>Divisi Media & Komtek</p>
+          <div className="glass-card" style={{ padding: '14px 12px' }}>
+            <h4 style={{ color: '#ffffff', fontSize: '1.25rem', fontWeight: '800', margin: '0 0 4px 0' }}>BEM</h4>
+            <p style={{ color: '#64748b', fontSize: '0.7rem', margin: 0, fontWeight: '500' }}>Divisi Media & Komtek</p>
           </div>
 
-          <div className="glass-card" style={{ padding: '16px' }}>
-            <h4 style={{ color: 'var(--accent-secondary, #60a5fa)', fontSize: '1.3rem', fontWeight: '800', margin: '0 0 4px 0' }}>React</h4>
-            <p style={{ color: '#64748b', fontSize: '0.72rem', margin: 0, fontWeight: '500' }}>Core Specialization</p>
+          <div className="glass-card" style={{ padding: '14px 12px' }}>
+            <h4 style={{ color: 'var(--accent-secondary, #60a5fa)', fontSize: '1.25rem', fontWeight: '800', margin: '0 0 4px 0' }}>React</h4>
+            <p style={{ color: '#64748b', fontSize: '0.7rem', margin: 0, fontWeight: '500' }}>Core Specialization</p>
           </div>
         </div>
 
-        {/* VIBE MUSIC WIDGET */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '15px',
-          padding: '12px 18px',
-          background: 'rgba(19, 20, 31, 0.65)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: '16px',
-          backdropFilter: 'blur(10px)',
-          maxWidth: '580px',
-          boxSizing: 'border-box'
-        }}>
-          <button 
+        {/* ✅ VIBE MUSIC WIDGET — uses .hero-music-widget for responsive width */}
+        <div className="hero-music-widget">
+          <button
             id="music-toggle-btn"
             onClick={toggleAudio}
             style={{
-              width: '38px',
-              height: '38px',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               background: 'var(--accent-primary, #3b82f6)',
               border: 'none',
@@ -411,22 +392,23 @@ export default function Hero() {
               justifyContent: 'center',
               cursor: 'pointer',
               boxShadow: '0 4px 12px var(--accent-glow, rgba(59, 130, 246, 0.4))',
-              fontSize: '0.85rem'
+              fontSize: '0.85rem',
+              flexShrink: 0
             }}
           >
             {isPlaying ? '⏸' : '▶'}
           </button>
 
           <div style={{ flex: 1, overflow: 'hidden' }}>
-            <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 'bold', color: '#ffffff' }}>
+            <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 'bold', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Coding & Designing Vibe 🎧
             </p>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
+            <p style={{ margin: 0, fontSize: '0.73rem', color: '#94a3b8' }}>
               {isPlaying ? 'Currently playing: Focus Mode' : 'Paused'}
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '3px', alignItems: 'center', height: '18px' }}>
+          <div style={{ display: 'flex', gap: '3px', alignItems: 'center', height: '18px', flexShrink: 0 }}>
             {[14, 22, 10, 18, 24, 12].map((height, i) => (
               <span
                 key={i}
@@ -443,24 +425,20 @@ export default function Hero() {
         </div>
 
       </div>
+      {/* END LEFT COLUMN */}
 
-      {/* 🪪 SISI KANAN: LANYARD PHYSICS & HOLOGRAPHIC BADGE */}
-      <div style={{ 
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        position: 'relative',
-        paddingTop: '20px',
-        zIndex: 2,
-        margin: '0 auto'
-      }}>
+      {/* ======================================================
+          🪪 SISI KANAN: LANYARD PHYSICS & HOLOGRAPHIC BADGE
+          Uses .hero-lanyard-col for responsive order/margin
+          ====================================================== */}
+      <div className="hero-lanyard-col">
 
         {/* PETUNJUK TEKS */}
         <div style={{
           position: 'absolute',
-          top: '-45px',
+          top: '-40px',
           color: 'rgba(148, 163, 184, 0.65)',
-          fontSize: '0.68rem',
+          fontSize: '0.65rem',
           fontWeight: '700',
           letterSpacing: '2px',
           pointerEvents: 'none',
@@ -469,25 +447,15 @@ export default function Hero() {
           ↓ GRAB & SWING ↓
         </div>
 
-        {/* DYNAMIC FLEXING SVG LANYARD STRAP RIBBON */}
-        <svg 
-          style={{
-            position: 'absolute',
-            top: '-25px',
-            width: '300px',
-            height: '180px',
-            overflow: 'visible',
-            pointerEvents: 'none',
-            zIndex: 1
-          }}
-        >
+        {/* ✅ DYNAMIC FLEXING SVG LANYARD STRAP RIBBON — uses .hero-lanyard-svg */}
+        <svg className="hero-lanyard-svg">
           <defs>
             <linearGradient id="strapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#1d4ed8" />
               <stop offset="100%" stopColor="var(--accent-primary, #3b82f6)" />
             </linearGradient>
           </defs>
-          {/* Left Ribbon Strand */}
+          {/* Left Ribbon Strand — uses relative % of SVG width (~136/300 ≈ 45%) */}
           <path
             d={`M 136 0 Q ${136 + dragOffset.x * 0.5} ${70 + dragOffset.y * 0.5}, ${142 + dragOffset.x} ${135 + dragOffset.y}`}
             fill="none"
@@ -520,9 +488,11 @@ export default function Hero() {
           transition: isDragging ? 'none' : 'transform 0.05s ease-out'
         }} />
 
-        {/* WADAH ID CARD 3D WITH HOLOGRAPHIC SHINE */}
-        <div 
+        {/* ✅ WADAH ID CARD — uses .hero-id-card-wrapper for responsive width/height */}
+        <div
+          className="hero-id-card-wrapper"
           onMouseDown={handleMouseDown}
+          onTouchStart={handleMouseDown}
           onMouseMove={handleCardMouseMove}
           onMouseLeave={handleCardMouseLeave}
           onClick={() => {
@@ -532,23 +502,20 @@ export default function Hero() {
             }
           }}
           style={{
-            position: 'relative',
-            marginTop: '135px',
-            width: '290px',
-            height: '400px',
             backgroundColor: '#181926',
             borderRadius: '22px',
             border: '2px solid rgba(255, 255, 255, 0.15)',
-            boxShadow: isDragging 
-              ? '0 30px 60px var(--accent-glow, rgba(59, 130, 246, 0.5))' 
+            boxShadow: isDragging
+              ? '0 30px 60px var(--accent-glow, rgba(59, 130, 246, 0.5))'
               : '0 25px 50px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-glow, rgba(59, 130, 246, 0.25))',
-            padding: '16px',
+            padding: '14px',
             cursor: isDragging ? 'grabbing' : 'grab',
             transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${pendulumAngle}deg) perspective(1000px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry + (isFlipped ? 180 : 0)}deg)`,
             transition: isDragging ? 'none' : 'transform 0.1s ease-out, box-shadow 0.3s ease',
             transformStyle: 'preserve-3d',
             overflow: 'hidden',
-            zIndex: 3
+            zIndex: 3,
+            touchAction: 'none',
           }}
         >
           {/* HOLOGRAPHIC FOIL GLARE OVERLAY */}
@@ -563,7 +530,7 @@ export default function Hero() {
           }} />
 
           <div style={{ position: 'absolute', inset: '8px', border: '1px dashed rgba(255, 255, 255, 0.15)', borderRadius: '16px', pointerEvents: 'none' }} />
-          <div style={{ width: '40px', height: '9px', backgroundColor: '#0d0e15', borderRadius: '10px', margin: '0 auto 12px auto' }} />
+          <div style={{ width: '40px', height: '9px', backgroundColor: '#0d0e15', borderRadius: '10px', margin: '0 auto 10px auto' }} />
 
           {/* SISI DEPAN CARD */}
           <div style={{
@@ -573,40 +540,40 @@ export default function Hero() {
             backgroundColor: '#1e1e2f',
             borderRadius: '14px',
             border: '1px solid rgba(59, 130, 246, 0.4)',
-            padding: '15px 12px',
+            padding: '14px 12px',
             display: isFlipped ? 'none' : 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             boxSizing: 'border-box'
           }}>
             <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 4px' }}>
-              <span style={{ fontSize: '0.62rem', fontWeight: '800', color: 'var(--accent-secondary, #60a5fa)', letterSpacing: '0.5px' }}>UNIVERSITAS ESA UNGGUL</span>
-              <span style={{ fontSize: '0.62rem', fontWeight: '700', color: '#64748b' }}>2026</span>
+              <span style={{ fontSize: '0.6rem', fontWeight: '800', color: 'var(--accent-secondary, #60a5fa)', letterSpacing: '0.4px' }}>UNIVERSITAS ESA UNGGUL</span>
+              <span style={{ fontSize: '0.6rem', fontWeight: '700', color: '#64748b' }}>2026</span>
             </div>
 
-            <div style={{ width: '140px', height: '160px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--accent-primary, #3b82f6)', marginBottom: '10px', backgroundColor: '#13141f' }}>
-              <img 
-                src="/foto-profil.jpg" 
-                alt="Aqilla Sofia" 
+            <div style={{ width: '130px', height: '148px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--accent-primary, #3b82f6)', marginBottom: '10px', backgroundColor: '#13141f' }}>
+              <img
+                src="/foto-aqila.jpg"
+                alt="Aqilla Sofia"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={(e) => { e.target.src = 'https://via.placeholder.com/140x160/1e1e2f/ffffff?text=Foto+Aqilla'; }}
+                onError={(e) => { e.target.src = 'https://via.placeholder.com/130x148/1e1e2f/ffffff?text=Foto+Aqilla'; }}
               />
             </div>
 
-            <h4 style={{ color: '#fff', fontSize: '1.05rem', margin: '0 0 2px 0', fontWeight: 'bold' }}>Aqilla Sofia Y. L.</h4>
-            
-            <p 
+            <h4 style={{ color: '#fff', fontSize: '1rem', margin: '0 0 2px 0', fontWeight: 'bold' }}>Aqilla Sofia Y. L.</h4>
+
+            <p
               onClick={copyIdNumber}
               title="Klik untuk salin ID"
-              style={{ color: 'var(--accent-secondary, #60a5fa)', fontSize: '0.75rem', fontWeight: '600', margin: '0 0 8px 0', cursor: 'pointer' }}
+              style={{ color: 'var(--accent-secondary, #60a5fa)', fontSize: '0.72rem', fontWeight: '600', margin: '0 0 8px 0', cursor: 'pointer' }}
             >
               {copiedToast ? '✓ Copied!' : 'ID: 2026-INFORMATIKA'}
             </p>
 
-            <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '4px 12px', borderRadius: '6px', fontSize: '0.72rem', color: '#cbd5e1', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+            <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '4px 12px', borderRadius: '6px', fontSize: '0.68rem', color: '#cbd5e1', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
               UI/UX & FRONTEND DEV
             </div>
-            
+
             <div style={{ marginTop: 'auto', width: '85%', height: '10px', background: 'repeating-linear-gradient(90deg, #94a3b8, #94a3b8 2px, transparent 2px, transparent 4px)', opacity: 0.5 }} />
           </div>
 
@@ -619,7 +586,7 @@ export default function Hero() {
             backgroundColor: '#13141f',
             borderRadius: '14px',
             border: '1px solid rgba(59, 130, 246, 0.5)',
-            padding: '20px 15px',
+            padding: '18px 14px',
             display: isFlipped ? 'flex' : 'none',
             flexDirection: 'column',
             alignItems: 'center',
@@ -627,25 +594,28 @@ export default function Hero() {
             textAlign: 'center',
             boxSizing: 'border-box'
           }}>
-            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🎓</div>
-            <h4 style={{ color: '#fff', fontSize: '1.05rem', marginBottom: '6px' }}>Teknik & Informatika</h4>
-            <p style={{ color: '#94a3b8', fontSize: '0.78rem', lineHeight: '1.4', marginBottom: '15px' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎓</div>
+            <h4 style={{ color: '#fff', fontSize: '1rem', marginBottom: '6px' }}>Teknik & Informatika</h4>
+            <p style={{ color: '#94a3b8', fontSize: '0.76rem', lineHeight: '1.4', marginBottom: '14px' }}>
               "Membangun antarmuka web yang estetis, fungsional, dan memberikan solusi visual terbaik."
             </p>
 
-            <div style={{ width: '80px', height: '80px', background: '#fff', padding: '6px', borderRadius: '8px', marginBottom: '10px' }}>
-              <img 
-                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/6285813462446" 
-                alt="QR WhatsApp" 
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+            <div style={{ width: '76px', height: '76px', background: '#fff', padding: '6px', borderRadius: '8px', marginBottom: '10px' }}>
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/6285813462446"
+                alt="QR WhatsApp"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
             </div>
-            <p style={{ color: 'var(--accent-secondary, #60a5fa)', fontSize: '0.7rem', fontWeight: 'bold', margin: 0 }}>SCAN FOR CONTACT</p>
+            <p style={{ color: 'var(--accent-secondary, #60a5fa)', fontSize: '0.68rem', fontWeight: 'bold', margin: 0 }}>SCAN FOR CONTACT</p>
           </div>
 
         </div>
+        {/* END ID CARD */}
 
       </div>
+      {/* END RIGHT COLUMN */}
+
     </section>
   );
 }
